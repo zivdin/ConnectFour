@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect4</title>
+    <style>
+        td{
+            width: 100px;
+            height: 100px;
+            background:beige;
+        }
+        .container{
+            width: 80%;
+            margin: auto;
+            justify-content: center;
+            display: flex;
+        }
+        h1{
+            text-align: center;
+        }
+    </style>
+</head>
+<body onload="fetchPlayer()">
+    <h1 id="header"></h1>
+    <h1 id="h1"></h1>
+    <div class="container" >
+        
+
+    
+        <table>
+            <tr>
+                <td id="00"onclick="sendMove(0)"></td><td id="01"onclick=sendMove(1)></td><td id="02"onclick=sendMove(2)></td><td id="03"onclick=sendMove(3)></td><td id="04"onclick=sendMove(4)></td><td id="05"onclick=sendMove(5)></td><td id="06"onclick=sendMove(6)></td>
+            </tr>
+            <tr>
+                <td id="10"onclick=sendMove(0)></td><td id="11"onclick=sendMove(1)></td><td id="12"onclick=sendMove(2)></td><td id="13"onclick=sendMove(3)></td><td id="14"onclick=sendMove(4)></td><td id="15"onclick=sendMove(5)></td><td id="16"onclick=sendMove(6)></td>
+            </tr>
+            <tr>
+                <td id="20"onclick=sendMove(0)></td><td id="21"onclick=sendMove(1)></td><td id="22"onclick=sendMove(2)></td><td id="23"onclick=sendMove(3)></td><td id="24"onclick=sendMove(4)></td><td id="25"onclick=sendMove(5)></td><td id="26"onclick=sendMove(6)></td>
+            </tr>
+            <tr>
+                <td id="30"onclick=sendMove(0)></td><td id="31"onclick=sendMove(1)></td><td id="32"onclick=sendMove(2)></td><td id="33"onclick=sendMove(3)></td><td id="34"onclick=sendMove(4)></td><td id="35"onclick=sendMove(5)></td><td id="36"onclick=sendMove(6)></td>
+            </tr>
+            <tr>
+                <td id="40"onclick=sendMove(0)></td><td id="41"onclick=sendMove(1)></td><td id="42"onclick=sendMove(2)></td><td id="43"onclick=sendMove(3)></td><td id="44"onclick=sendMove(4)></td><td id="45"onclick=sendMove(5)></td><td id="46"onclick=sendMove(6)></td>
+            </tr>
+            <tr>
+                <td id="50"onclick=sendMove(0)></td><td id="51"onclick=sendMove(1)></td><td id="52"onclick=sendMove(2)></td><td id="53"onclick=sendMove(3)></td><td id="54"onclick=sendMove(4)></td><td id="55"onclick=sendMove(5)></td><td id="56"onclick=sendMove(6)></td>
+            </tr>
+        
+        </table>
+        <button id="btnRestart"style="display:none;">Play Again</button>
+    </div>
+    <script>
+        const header=document.getElementById("header");
+        var player;
+        var lastMovePlayer;
+        var interval;
+        async function fetchPlayer(){
+            let response =await fetch(`/GetPlayer/`);
+            let data =await response.json();
+            player = data.player;
+            if(player==-1){
+                clearInterval(interval);
+                document.getElementById("h1").innerHTML="Game Is Full!"
+            }
+            else{
+                console.log(player);
+                header.innerHTML=`Player ${player}`;
+            }
+            
+        }
+        let isFirstMove=true;
+        async function sendMove(col){
+            if(lastMovePlayer==0&&player==1){
+                console.log("send first")
+                let response =await fetch(`/GetMove/${player}/${col}/`);
+                let data =await response.json();
+                isFirstMove=false;
+            }            
+            else if(lastMovePlayer!=0)  {
+                if(lastMovePlayer!=player){
+                    console.log("send")
+                    let response =await fetch(`/GetMove/${player}/${col}/`);
+                    let data =await response.json();
+                    console.log(data); 
+                }
+                else{
+                    console.log("Its not your turn!");
+                }
+            }
+            
+        }
+        let flag=false;
+        async function fetchMove(){
+            let response =await fetch(`/GetLast`);
+            let data =await response.json();
+            if(data.currplayers>1){
+                if(!flag){
+                    document.getElementById("h1").innerHTML=null;
+                }
+                console.log(data);
+                lastMovePlayer=data.player;
+                if(lastMovePlayer!=0){
+                    
+                    SetBox(data.player,data.row,data.col);
+                    if(data.msg){
+                        console.log(data.msg)
+                        
+                        clearInterval(interval);
+                        document.getElementById("h1").innerHTML=data.msg;
+                        document.getElementById("btnRestart").style="display:block";
+                    
+                    }
+                }
+                
+            }else{
+                document.getElementById("h1").innerHTML="waiting for second player...";
+            }
+            
+            
+            
+            
+        }
+
+        function SetBox(player,row,col){
+            let block = document.getElementById(`${row}${col}`);
+            if(!block.hasChildNodes()){
+               if(player==1){
+                let img;
+                img=`<img src="red.png" style="width:100px;"></img>`
+                block.innerHTML=img;
+              } 
+              else if(player==2){
+                let img;
+                img=`<img src="blue.png" style="width:100px;"></img>`
+                block.innerHTML=img;
+              }
+            }
+            
+            
+        }
+        interval=setInterval(fetchMove,100);
+        document.getElementById("btnRestart").addEventListener("click",async ()=>{
+            let response= await fetch("/GetInitGame/");
+            
+            window.location.reload();
+        })
+        
+    </script>
+    
+</body>
+</html>
